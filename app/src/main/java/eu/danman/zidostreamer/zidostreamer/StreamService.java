@@ -158,10 +158,12 @@ public class StreamService extends Service {
                             if ((log != null) && (log.length() > 0)){
                                 Log.d("ffmpeg", log);
                                 sendLog(log);
+				// Make sure this thread is well behaved... and yield its
+				// timeslice a bit...
+				sleep(10);
                             } else {
                                 sleep(100);
                             }
-
                         }
 
                     } catch (InterruptedException e) {
@@ -265,14 +267,13 @@ public class StreamService extends Service {
 
         // create proxy thread to read from mediarecorder and write to ffmpeg stdin
         final ParcelFileDescriptor finalreadFD = readFD;
-
+	
         Thread readerThread = new Thread() {
             @Override
             public void run() {
 
                 byte[] buffer = new byte[8192];
                 int read = 0;
-
                 OutputStream ffmpegInput = ffmpegProcess.getOutputStream();
 
                 final FileInputStream reader = new FileInputStream(finalreadFD.getFileDescriptor());
@@ -285,22 +286,22 @@ public class StreamService extends Service {
                             read = reader.read(buffer);
                             ffmpegInput.write(buffer, 0, read);
                         } else {
-                            sleep(10);
+                            sleep(1);
                         }
 
                     }
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-
                 } catch (IOException e) {
                     e.printStackTrace();
-
                     onDestroy();
                 }
             }
         };
 
+        // Make sure this thread has high priority...
+        readerThread.setPriority( Thread.NORM_PRIORITY + 1 );
         readerThread.start();
         
         // Step 6: Prepare configured MediaRecorder
@@ -326,6 +327,7 @@ public class StreamService extends Service {
             Toast.makeText(this, "Failed to start recording",Toast.LENGTH_LONG).show();
         }
 
+        Toast.makeText(this, "Service Started",Toast.LENGTH_LONG).show();
         return Service.START_NOT_STICKY;
 
     }

@@ -91,9 +91,19 @@ public class MainActivity extends ActionBarActivity {
             registerReceiver(activityReceiver, intentFilter);
         }
 
-        startStreaming();
+        // startStreaming();
 
     }
+
+
+    @Override
+    protected void onDestroy(){
+
+        unregisterReceiver(activityReceiver);
+        super.onDestroy();
+
+    }
+
 
     @Override
     protected void onResume(){
@@ -113,12 +123,21 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void startStreaming(){
-            service = new Intent(this, StreamService.class);
-            startService(service);
+
+         if( service == null ) {
+             Toast.makeText(this, "Servive Started.", Toast.LENGTH_SHORT).show();
+             service = new Intent(this, StreamService.class);
+             startService(service);
+         }
     }
 
-    private void stopStreaming(){
+    private void stopStreaming() {
 
+        if(service != null) {
+           stopService(service);
+           Toast.makeText(this, "Service Stopped.", Toast.LENGTH_SHORT).show();
+           service = null;
+        }
     }
 
     @Override
@@ -172,7 +191,5 @@ public class MainActivity extends ActionBarActivity {
             mScrollView.smoothScrollTo(0, textView.getBottom());
         }
     };
-
-
 
 }
